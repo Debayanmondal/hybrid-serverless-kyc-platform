@@ -1,0 +1,12 @@
+package com.bank.kyc.dto;
+
+public enum ApplicantStatus {
+    INITIATED,
+    DOCUMENTS_PENDING,
+    DOCUMENTS_UPLOADED,
+    VERIFICATION_IN_PROGRESS,
+    IDENTITY_VERIFIED,
+    ACCOUNT_ACTIVATED,
+    APPROVED,
+    REJECTED
+}

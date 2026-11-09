@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 16 (Hosts kyc_db)
+  postgres:
+    image: postgres:16-alpine
+    container_name: kyc-postgres
+    environment:
+      POSTGRES_DB: kyc_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_kyc_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d kyc_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # LocalStack (Simulates AWS S3, SNS, SQS, Lambda)
+  localstack:
+    image: localstack/localstack:latest
+    container_name: kyc-localstack
+    ports:
+      - "4566:4566"            # LocalStack Gateway
+      - "4510-4559:4510-4559"  # external services port range
+    environment:
+      - SERVICES=s3,sqs,sns,lambda
+      - AWS_DEFAULT_REGION=us-east-1
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - ./docker/init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh
+      - "/var/run/docker.sock:/var/run/docker.sock"
+
+  # Onboarding Service (Spring Boot REST API)
+  onboarding-service:
+    build:
+      context: .
+      dockerfile: onboarding-service/Dockerfile
+    container_name: kyc-onboarding-service
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/kyc_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgrespassword
+      AWS_ENDPOINT: http://localstack:4566
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      S3_BUCKET_NAME: kyc-documents-bucket
+      SNS_TOPIC_ARN: arn:aws:sns:us-east-1:000000000000:kyc-events-topic
+    depends_on:
+      postgres:
+        condition: service_healthy
+      localstack:
+        condition: service_started
+
+  # Verification Worker (Asynchronous SQS Background Consumer)
+  verification-worker:
+    build:
+      context: .
+      dockerfile: verification-worker/Dockerfile
+    container_name: kyc-verification-worker
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/kyc_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgrespassword
+      AWS_ENDPOINT: http://localstack:4566
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      SQS_QUEUE_URL: http://localstack:4566/000000000000/kyc-verification-queue
+      SNS_TOPIC_ARN: arn:aws:sns:us-east-1:000000000000:kyc-events-topic
+    depends_on:
+      postgres:
+        condition: service_healthy
+      localstack:
+        condition: service_started
+
+volumes:
+  postgres_kyc_data:

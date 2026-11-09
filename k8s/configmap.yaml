@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kyc-platform-config
+data:
+  SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres-service:5432/kyc_db"
+  AWS_REGION: "us-east-1"
+  S3_BUCKET_NAME: "kyc-platform-documents-prod"
+  SNS_TOPIC_ARN: "arn:aws:sns:us-east-1:123456789012:kyc-platform-events-topic"
+  SQS_QUEUE_URL: "https://sqs.us-east-1.amazonaws.com/123456789012/kyc-platform-verification-queue"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kyc-platform-secrets
+type: Opaque
+stringData:
+  SPRING_DATASOURCE_USERNAME: "postgres"
+  SPRING_DATASOURCE_PASSWORD: "SuperSecretKycPass123!"
+  AWS_ACCESS_KEY_ID: "AKIAEXAMPLEKEY"
+  AWS_SECRET_ACCESS_KEY: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"

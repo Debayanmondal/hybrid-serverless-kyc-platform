@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.bank.kyc</groupId>
+    <artifactId>hybrid-serverless-kyc-platform</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+    <name>hybrid-serverless-kyc-platform</name>
+    <description>Hybrid Serverless &amp; Microservices KYC Digital Onboarding Platform</description>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.0</version>
+        <relativePath/>
+    </parent>
+
+    <modules>
+        <module>kyc-contracts</module>
+        <module>onboarding-service</module>
+        <module>lambda-processor</module>
+        <module>verification-worker</module>
+    </modules>
+
+    <properties>
+        <java.version>17</java.version>
+        <aws.sdk.version>2.27.21</aws.sdk.version>
+        <aws.lambda.core.version>1.2.3</aws.lambda.core.version>
+        <aws.lambda.events.version>3.13.0</aws.lambda.events.version>
+        <lombok.version>1.18.34</lombok.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- AWS Java SDK v2 BOM -->
+            <dependency>
+                <groupId>software.amazon.awssdk</groupId>
+                <artifactId>bom</artifactId>
+                <version>${aws.sdk.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.bank.kyc</groupId>
+                <artifactId>kyc-contracts</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.13.0</version>
+                    <configuration>
+                        <source>${java.version}</source>
+                        <target>${java.version}</target>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+</project>

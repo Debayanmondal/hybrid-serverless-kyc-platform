@@ -1,0 +1,51 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: onboarding-service
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/kyc_db}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgrespassword}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+# AWS / LocalStack configuration
+cloud:
+  aws:
+    endpoint: ${AWS_ENDPOINT:http://localhost:4566}
+    region: ${AWS_REGION:us-east-1}
+    credentials:
+      access-key: ${AWS_ACCESS_KEY_ID:test}
+      secret-key: ${AWS_SECRET_ACCESS_KEY:test}
+
+app:
+  s3:
+    bucket-name: ${S3_BUCKET_NAME:kyc-documents-bucket}
+    presigned-url-expiry-minutes: 15
+  sns:
+    topic-arn: ${SNS_TOPIC_ARN:arn:aws:sns:us-east-1:000000000000:kyc-events-topic}
