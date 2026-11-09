@@ -191,36 +191,6 @@ hybrid-serverless-kyc-platform/
 
 ---
 
-## 💼 Recruiter & Hiring Manager Cheat Sheet
-
-### Resume Keyword Mapping
-| Resume Keyword | Where & How It Is Used in This Project |
-| :--- | :--- |
-| **AWS S3** | Private document bucket with versioning, SSE-AES256, CORS, and presigned PUT URL generation. |
-| **AWS Lambda** | Serverless Java 17 handler triggered by S3 `ObjectCreated` to extract metadata and publish events. |
-| **AWS SNS** | Topic fan-out architecture decoupling ingestion from downstream verification and audit services. |
-| **AWS SQS** | Decoupled message queue with long-polling (20s), visibility timeout, and Dead-Letter Queue (DLQ). |
-| **Spring Boot 3** | REST API (`onboarding-service`) and background consumer (`verification-worker`) on Java 17. |
-| **PostgreSQL 16** | Relational state store with indexes, unique constraints, and JPA `@Version` optimistic locking. |
-| **Terraform** | Declarative IaC provisioning S3, IAM least-privilege roles, SNS, SQS, Lambda, and RDS. |
-| **Docker / LocalStack** | Full offline AWS cloud emulation for frictionless local testing and CI/CD pipelines. |
-
-### Top Senior Interview Questions & Answers
-
-#### Q1: "Why not upload files through your Spring Boot backend service?"
-> *"Uploading files through Spring Boot creates a severe bottleneck: backend servers must buffer high-resolution images and PDFs in memory or temp disks, multiplying network bandwidth usage and making JVM heaps vulnerable to OutOfMemoryErrors under spike loads. By issuing an S3 Presigned PUT URL, the client streams the file directly to Amazon S3. The backend remains lightweight, stateless, and capable of scaling horizontally without worrying about file transfer bandwidth."*
-
-#### Q2: "How does the platform handle poison pill messages or worker failures in SQS?"
-> *"We configure an SQS visibility timeout of 30 seconds and long polling of 20 seconds. If a worker crashes or fails while processing a message, it never calls `deleteMessage()`. Once the visibility timeout expires, SQS makes the message available for another worker instance. If the message fails consecutively 3 times (e.g. malformed JSON or corrupted data), the SQS redrive policy automatically routes it to `kyc-verification-dlq`. This isolates toxic messages, triggers CloudWatch alerts, and prevents queue blockage."*
-
-#### Q3: "Why use Lambda between S3 and SNS rather than sending S3 notifications directly to SNS?"
-> *"While S3 can notify SNS directly, the raw S3 notification payload contains only the bucket and key. In an enterprise KYC architecture, we need to extract custom object user-metadata (`applicant-id`, `document-type`), compute cryptographic SHA-256 checksums, and validate headers before events hit the messaging backbone. AWS Lambda serves as an ultralight, autoscaling serverless validation filter that enriches and transforms raw cloud events into strongly typed domain events (`DocumentUploadedEvent`)."*
-
-#### Q4: "How do you guarantee idempotency if SQS delivers the same event more than once?"
-> *"AWS SQS standard queues provide 'at-least-once' delivery, which means duplicates can occur. In our platform, every event carries an immutable `eventId` and `s3Key`. In PostgreSQL, `document_records` has a unique constraint on `s3_key`, and the `Applicant` entity uses optimistic locking (`@Version`). If a duplicate message arrives, the worker checks if the document record has already been marked `verified = true`, safely acknowledging and discarding the duplicate without re-executing state machine transitions."*
-
----
-
 ## 🚀 Quickstart & Local Setup
 
 ### Prerequisites
